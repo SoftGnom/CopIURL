@@ -3,11 +3,58 @@ import subprocess
 import tkinter as tk
 from tkinter import messagebox, ttk
 import webbrowser
-
-FITXER_DESTI = 'desti.txt'
-
-
 import shutil
+import csv
+from dataclasses import dataclass
+
+# Canviem el fitxer d'origen i afegim la carpeta per defecte
+FITXER_REGISTRE = 'registre_descarregues.csv'
+CARPETA_SORTIDA = 'html_descarregats'
+
+
+# --- ESTRUCTURA I GESTIÓ DELS REGISTRES CSV ---
+@dataclass
+class ItemRegistre:
+    id: str
+    url: str
+    correcte: str
+    ruta_fitxer: str
+    motiu_error: str
+
+
+def carregar_registres_csv(ruta_csv):
+    """Llegeix el CSV i retorna una llista d'objectes ItemRegistre."""
+    if not os.path.exists(ruta_csv):
+        return []
+    registres = []
+    with open(ruta_csv, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for row in reader:
+            registres.append(
+                ItemRegistre(
+                    id=row.get('ID', ''),
+                    url=row.get('URL', ''),
+                    correcte=row.get('CORRECTE', 'False'),
+                    ruta_fitxer=row.get('RUTA_FITXER', ''),
+                    motiu_error=row.get('MOTIU_ERROR', ''),
+                )
+            )
+    return registres
+
+
+def guardar_registres_csv(ruta_csv, registres):
+    """Guarda la llista d'objectes ItemRegistre de nou al CSV."""
+    with open(ruta_csv, 'w', encoding='utf-8', newline='') as f:
+        f.write('ID;URL;CORRECTE;RUTA_FITXER;MOTIU_ERROR\n')
+        for r in registres:
+            f.write(
+                f'{r.id};{r.url};{r.correcte};{r.ruta_fitxer};{r.motiu_error}\n'
+            )
+
+
+
+
+# --- ESTRUCTURA I GESTIÓ DELS REGISTRES CSV ---
 
 def obrir_amb_librewolf(url):
     url = url.strip()
@@ -64,184 +111,185 @@ def obrir_amb_librewolf(url):
     except Exception:
         webbrowser.open(url)
 
+@dataclass
+class ItemRegistre:
+    id: str
+    url: str
+    correcte: str
+    ruta_fitxer: str
+    motiu_error: str
 
 
-def obrir_amb_librewolf_no2(url):
-    url = url.strip()
-    if not url:
-        return
-
-    # Assegurem el protocol per evitar errors de navegació
-    if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url
-
-    # 1. Intenta obrir la comanda nativa 'librewolf' si existeix al PATH
-    if shutil.which('librewolf'):
-        subprocess.Popen(['librewolf', url])
-        return
-
-    # 2. Si utilitzes Linux Mint / Flatpak, intenta executar el paquet com.librewolf.LibreWolf
-    if shutil.which('flatpak'):
-        comprovacio = subprocess.run(
-            ['flatpak', 'info', 'com.librewolf.LibreWolf'],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        if comprovacio.returncode == 0:
-            subprocess.Popen(['flatpak', 'run', 'com.librewolf.LibreWolf', url])
-            return
-
-    # 3. Si no es troba cap executable de LibreWolf, utilitza el navegador per defecte
-    messagebox.showwarning(
-        'Avís',
-        "No s'ha trobat LibreWolf (ni natiu ni Flatpak). S'obrirà amb el navegador per defecte.",
-    )
-    webbrowser.open(url)
+def carregar_registres_csv(ruta_csv):
+    """Llegeix el CSV i retorna una llista d'objectes ItemRegistre."""
+    if not os.path.exists(ruta_csv):
+        return []
+    registres = []
+    with open(ruta_csv, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for row in reader:
+            registres.append(
+                ItemRegistre(
+                    id=row.get('ID', ''),
+                    url=row.get('URL', ''),
+                    correcte=row.get('CORRECTE', 'False'),
+                    ruta_fitxer=row.get('RUTA_FITXER', ''),
+                    motiu_error=row.get('MOTIU_ERROR', ''),
+                )
+            )
+    return registres
 
 
-
-def obrir_amb_librewolf_no(url):
-    url = url.strip()
-    if not url:
-        return
-
-    # Assegurem el protocol per evitar errors de navegació
-    if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url
-
-    try:
-        # Intenta obrir la URL directament amb l'executable de LibreWolf
-        subprocess.Popen(['librewolf', url])
-    except FileNotFoundError:
-        # Si 'librewolf' no està al PATH del sistema, utilitza el navegador per defecte
-        messagebox.showwarning(
-            'Avís',
-            "No s'ha trobat la comanda 'librewolf'. S'obrirà amb el navegador per defecte.",
-        )
-        webbrowser.open(url)
+def guardar_registres_csv(ruta_csv, registres):
+    """Guarda la llista d'objectes ItemRegistre de nou al CSV."""
+    with open(ruta_csv, 'w', encoding='utf-8', newline='') as f:
+        f.write('ID;URL;CORRECTE;RUTA_FITXER;MOTIU_ERROR\n')
+        for r in registres:
+            f.write(
+                f'{r.id};{r.url};{r.correcte};{r.ruta_fitxer};{r.motiu_error}\n'
+            )
 
 
+# --- INTERFÍCIE GRÀFICA REFACTORITZADA ---
 class AplicacioURLs:
+
 
     def __init__(self, root):
         self.root = root
-        self.root.title('Llançador de URLs - LibreWolf')
-        self.root.geometry('650x450')
+        self.root.title("Gestor de URLs i HTMLs - LibreWolf")
+        self.root.geometry("850x500")
 
-        self.urls = []
-        self.carregar_urls()
+        self.registres = carregar_registres_csv(FITXER_REGISTRE)
 
-        # --- Panell de la llista ---
-        frame_llista = ttk.Frame(root, padding=10)
-        frame_llista.pack(fill=tk.BOTH, expand=True)
-
-        self.scrollbar = ttk.Scrollbar(frame_llista)
-        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        self.listbox = tk.Listbox(
-            frame_llista,
-            yscrollcommand=self.scrollbar.set,
-            selectmode=tk.SINGLE,
-            font=('Consolas', 10),
-            bg='#f0f0f0',
-        )
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.scrollbar.config(command=self.listbox.yview)
-
-
-        # Inserim les URL a la llista
-        for url in self.urls:
-            self.listbox.insert(tk.END, url)
-
-        # Doble clic per obrir la URL seleccionada
-        self.listbox.bind(
-            '<Double-1>', lambda event: self.obrir_seleccionada()
-        )
-
-        # Permet esborrar directament prement la tecla Supr / Delete
-        self.listbox.bind('<Delete>', lambda event: self.esborrar_seleccionada())
-
-        # --- Panell de botons ---
+        # 1. PANELL DE BOTONS (Mogut a SOBRE de la taula)
         frame_botons = ttk.Frame(root, padding=10)
-        frame_botons.pack(fill=tk.X)
+        frame_botons.pack(fill=tk.X, side=tk.TOP)  # <-- MODIFICAT: Ara es posiciona primer (a dalt)
 
-        btn_obrir = ttk.Button(
-            frame_botons,
-            text='Obrir Seleccionada',
-            command=self.obrir_seleccionada,
-        )
-        btn_obrir.pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_botons, text="Obrir URL", command=self.obrir_seleccionada).pack(side=tk.LEFT, padx=3)
+        ttk.Button(frame_botons, text="Obrir Totes URLs", command=self.obrir_totes).pack(side=tk.LEFT, padx=3)
+        ttk.Button(frame_botons, text="Obrir HTML", command=self.obrir_html_local).pack(side=tk.LEFT, padx=3)
+        ttk.Button(frame_botons, text="Obrir Carpeta", command=self.obrir_carpeta_local).pack(side=tk.LEFT, padx=3)
+        ttk.Button(frame_botons, text="Esborrar", command=self.esborrar_seleccionada).pack(side=tk.LEFT, padx=3)
 
-        btn_totes = ttk.Button(
-            frame_botons, text='Obrir Totes', command=self.obrir_totes
-        )
-        btn_totes.pack(side=tk.LEFT, padx=5)
-
-        btn_esborrar = ttk.Button(
-            frame_botons,
-            text='Esborrar Seleccionada',
-            command=self.esborrar_seleccionada,
-        )
-        btn_esborrar.pack(side=tk.LEFT, padx=5)
-
-
-        self.lbl_estat = ttk.Label(
-            frame_botons, text=f'Total: {len(self.urls)} URLs'
-        )
+        self.lbl_estat = ttk.Label(frame_botons, text="")
         self.lbl_estat.pack(side=tk.RIGHT, padx=5)
 
-    def carregar_urls(self):
-        if os.path.exists(FITXER_DESTI):
-            with open(FITXER_DESTI, 'r', encoding='utf-8') as f:
-                self.urls = [linia.strip() for linia in f if linia.strip()]
-        else:
-            messagebox.showerror(
-                'Error', f"No s'ha trobat el fitxer '{FITXER_DESTI}'."
+        # 2. PANELL DE LA TAULA (Posicionat a sota dels botons)
+        frame_taula = ttk.Frame(root, padding=10)
+        frame_taula.pack(fill=tk.BOTH, expand=True, side=tk.BOTTOM)
+
+        # Scrollbar vertical (ja existent)
+        scrollbar_y = ttk.Scrollbar(frame_taula, orient=tk.VERTICAL)
+        scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Scrollbar horitzontal (NOU)
+        scrollbar_x = ttk.Scrollbar(frame_taula, orient=tk.HORIZONTAL)  # <-- NOU
+        scrollbar_x.pack(side=tk.BOTTOM, fill=tk.X)                      # <-- NOU
+
+        columnes = ('ID', 'URL', 'ESTAT', 'RUTA')
+        self.tree = ttk.Treeview(
+            frame_taula,
+            columns=columnes,
+            show='headings',
+            selectmode='browse',
+            yscrollcommand=scrollbar_y.set,
+            xscrollcommand=scrollbar_x.set  # <-- NOU: Vinculat a la barra horitzontal
+        )
+        scrollbar_y.config(command=self.tree.yview)
+        scrollbar_x.config(command=self.tree.xview)  # <-- NOU: Control de desplaçament X
+
+        # Definició de capçaleres i amples
+        self.tree.heading('ID', text='ID')
+        self.tree.heading('URL', text='URL')
+        self.tree.heading('ESTAT', text='Estat')
+        self.tree.heading('RUTA', text='Ruta Fitxer HTML')
+
+        self.tree.column('ID', width=50, minwidth=40, anchor='center')
+        self.tree.column('URL', width=400, minwidth=200, anchor='w')
+        self.tree.column('ESTAT', width=80, minwidth=60, anchor='center')
+        self.tree.column('RUTA', width=350, minwidth=200, anchor='w')
+
+        self.tree.pack(fill=tk.BOTH, expand=True)
+
+        # Detecció d'esdeveniments
+        self.tree.bind('<Double-1>', lambda e: self.obrir_seleccionada())
+        self.tree.bind('<Delete>', lambda e: self.esborrar_seleccionada())
+
+        self.actualitzar_taula()
+
+
+    def actualitzar_taula(self):
+        """Refresca les files del Treeview amb la informació actual."""
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        for reg in self.registres:
+            estat_text = (
+                'OK' if reg.correcte.strip().lower() == 'true' else 'ERROR'
+            )
+            self.tree.insert(
+                '',
+                tk.END,
+                values=(reg.id, reg.url, estat_text, reg.ruta_fitxer),
             )
 
+        self.lbl_estat.config(text=f'Total: {len(self.registres)} elements')
+
+    def obtenir_item_seleccionat(self):
+        """Retorna l'objecte ItemRegistre seleccionat o None."""
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showinfo('Atenció', 'Selecciona una línia de la taula.')
+            return None
+        index_tree = self.tree.index(selected[0])
+        return self.registres[index_tree]
+
     def obrir_seleccionada(self):
-        seleccio = self.listbox.curselection()
-        if seleccio:
-            url = self.listbox.get(seleccio[0])
-            obrir_amb_librewolf(url)
-        else:
-            messagebox.showinfo('Atenció', 'Selecciona una URL de la llista.')
+        item = self.obtenir_item_seleccionat()
+        if item:
+            obrir_amb_librewolf(item.url)
 
     def obrir_totes(self):
-        if not self.urls:
+        if not self.registres:
             return
         if messagebox.askyesno(
             'Confirmació',
-            f'Vols obrir les {len(self.urls)} URLs en pestanyes de LibreWolf?',
+            f'Vols obrir les {len(self.registres)} URLs a LibreWolf?',
         ):
-            for url in self.urls:
-                obrir_amb_librewolf(url)
+            for reg in self.registres:
+                obrir_amb_librewolf(reg.url)
+
+    def obrir_html_local(self):
+        item = self.obtenir_item_seleccionat()
+        if item:
+            obrir_fitxer_local(item.ruta_fitxer)
+
+    def obrir_carpeta_local(self):
+        item = self.obtenir_item_seleccionat()
+        ruta = item.ruta_fitxer if item else ''
+        obrir_carpeta_contenidora(ruta)
 
     def esborrar_seleccionada(self):
-        seleccio = self.listbox.curselection()
-        if not seleccio:
-            messagebox.showinfo('Atenció', 'Selecciona una URL per esborrar.')
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showinfo('Atenció', 'Selecciona un element per esborrar.')
             return
 
-        idx = seleccio[0]
+        idx = self.tree.index(selected[0])
+        item = self.registres[idx]
 
-        # 1. Eliminar de la llista de Python i del desplegable
-        self.listbox.delete(idx)
-        del self.urls[idx]
+        # Si existeix el fitxer HTML local, opcionalment l'esborrem del disc
+        if item.ruta_fitxer and os.path.exists(item.ruta_fitxer):
+            try:
+                os.remove(item.ruta_fitxer)
+            except Exception:
+                pass
 
-        # 2. Actualitzar el fitxer desti.txt amb la llista actualitzada
-        with open(FITXER_DESTI, 'w', encoding='utf-8') as f:
-            for url in self.urls:
-                f.write(url + '\n')
+        del self.registres[idx]
+        guardar_registres_csv(FITXER_REGISTRE, self.registres)
+        self.actualitzar_taula()
 
-        # 3. Actualitzar el comptador de la interfície
-        self.lbl_estat.config(text=f'Total: {len(self.urls)} URLs')
 
-        # 4. Seleccionar la següent línia (o la darrera si era l'última)
-        if self.urls:
-            nou_idx = min(idx, len(self.urls) - 1)
-            self.listbox.selection_set(nou_idx)
-            self.listbox.activate(nou_idx)
 
 
 if __name__ == '__main__':

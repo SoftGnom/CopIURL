@@ -50,11 +50,12 @@ while true; do
     echo "========================================"
     echo "1) Capturar text del porta-retalls -> origen.txt"
     echo "2) Executar noduplicats.py (Netejar línies)"
-    echo "3) Executar gui_librewolf.py (Interfície URLs)"
-    echo "4) Instal·lar / Recrear entorn virtual i dependències"
+    echo "3) Descarregar HTMLs nets (Text offline) -> html_descarregats/"
+    echo "4) Executar gui_librewolf.py (Interfície URLs)"
+    echo "5) Instal·lar / Recrear entorn virtual i dependències"
     echo "0) Sortir (i desactivar entorn)"
     echo "========================================"
-    read -p "Tria una opció [1-4]: " opcio
+    read -p "Tria una opció [0-5]: " opcio
 
     case $opcio in
         0)
@@ -75,10 +76,15 @@ while true; do
             ;;
         3)
             activar_venv
+            echo -e "\n--> Executant descarregar_html.py..."
+            python3 descarregar_html.py
+            ;;
+        4)
+            activar_venv
             echo -e "\n--> Executant gui_librewolf.py..."
             python3 gui_librewolf.py
             ;;
-        4)
+        5)
             echo -e "\n--> Iniciant procés d'instal·lació..."
             
             # Desactivem l'entorn si està en marxa per poder-lo reinstal·lar net
