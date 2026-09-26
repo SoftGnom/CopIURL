@@ -52,10 +52,11 @@ while true; do
     echo "2) Executar noduplicats.py (Netejar línies)"
     echo "3) Descarregar HTMLs nets (Text offline) -> html_descarregats/"
     echo "4) Executar gui_librewolf.py (Interfície URLs)"
-    echo "5) Instal·lar / Recrear entorn virtual i dependències"
+    echo "5) Processar HTMLs descarregats amb LLM (Ollama)"
+    echo "6) Instal·lar / Recrear entorn virtual i dependències"
     echo "0) Sortir (i desactivar entorn)"
     echo "========================================"
-    read -p "Tria una opció [0-5]: " opcio
+    read -p "Tria una opció [0-6]: " opcio
 
     case $opcio in
         0)
@@ -85,6 +86,11 @@ while true; do
             python3 gui_librewolf.py
             ;;
         5)
+            activar_venv
+            echo -e "\n--> Executant processador_llm.py..."
+            python3 processador_llm.py
+            ;;
+        6)
             echo -e "\n--> Iniciant procés d'instal·lació..."
             
             # Desactivem l'entorn si està en marxa per poder-lo reinstal·lar net
