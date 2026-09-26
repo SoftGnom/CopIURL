@@ -1,0 +1,21 @@
+{
+  "nom_tasca": "001 - Resum Executiu del text HTML",
+  "inputs": {
+    "purpose_context": {
+      "tipus": "directe",
+      "valor": "Ets un analista d'informació web. Rebràs el text net d'una pàgina web en el primer bloc de dades. Fes un resum executiu estructurat de la pàgina en català."
+    },
+    "data_1": {
+      "tipus": "columna_csv",
+      "valor": "RUTA_FITXER"
+    },
+    "data_2": {
+      "tipus": "directe",
+      "valor": "Estructura requerida:\n1. Títol/Tema principal\n2. Resum (màxim 150 paraules)\n3. Tres punts clau importants"
+    }
+  },
+  "sortida": {
+    "carpeta_relativa": "output/resums",
+    "prefix_fitxer": "resum_id_"
+  }
+}

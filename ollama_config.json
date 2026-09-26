@@ -1,0 +1,11 @@
+{
+  "host": "<URL>",
+  "model": "<id>",
+  "connect_timeout": <nº toDie>,
+  "read_timeout": <nº toDie>,
+  "keep_alive": "<nº alive>",
+  "options": {
+    "num_ctx": <context>,
+    "temperature": 0.2
+  }
+}

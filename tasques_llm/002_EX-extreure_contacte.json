@@ -1,0 +1,21 @@
+{
+  "nom_tasca": "002 - Extracció de dades de contacte",
+  "inputs": {
+    "purpose_context": {
+      "tipus": "directe",
+      "valor": "Analitza el text contingut a la dada 1 i extreu qualsevol dada de contacte visible: correus electrònics, telèfons, adreça física o xarxes socials."
+    },
+    "data_1": {
+      "tipus": "columna_csv",
+      "valor": "RUTA_FITXER"
+    },
+    "data_2": {
+      "tipus": "directe",
+      "valor": "Respon en un format llista net. Si no trobes informació de contacte, escriu clarament 'Cap dada de contacte trobada'."
+    }
+  },
+  "sortida": {
+    "carpeta_relativa": "output/contacte",
+    "prefix_fitxer": "contacte_id_"
+  }
+}
